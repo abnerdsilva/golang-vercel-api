@@ -2,41 +2,12 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
+	"golang-vercel-api/api/controller"
 	"golang-vercel-api/api/repository"
 	"io"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
-
-var userRepo = repository.NewUserRepository()
-
-// GetAllUsers responde com a lista de todos os usuários
-func GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	users := userRepo.FindAll()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
-}
-
-// GetUserByID responde com os dados de um usuário pelo ID
-func GetUserByID(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := strconv.Atoi(params["id"])
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	user, err := userRepo.FindByID(id)
-	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
-}
 
 // NotFoundHandler trata requisições para rotas não mapeadas
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +18,9 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler é a função principal que o Vercel chamará
 func Handler(w http.ResponseWriter, r *http.Request) {
+	var userRepo = repository.NewUserRepository()
+	var userController = controller.NewUserRepository(userRepo)
+
 	router := mux.NewRouter().PathPrefix("/api").Subrouter().StrictSlash(true)
 	router.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		_, err := io.WriteString(w, "OK")
@@ -56,8 +30,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Definindo as rotas
-	router.HandleFunc("/users", GetAllUsers).Methods("GET")
-	router.HandleFunc("/users/{id}", GetUserByID).Methods("GET")
+	router.HandleFunc("/users", userController.GetAllUsers).Methods("GET")
+	router.HandleFunc("/users/{id}", userController.GetUserByID).Methods("GET")
 
 	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 

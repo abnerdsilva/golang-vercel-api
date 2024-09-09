@@ -1,8 +1,6 @@
 package repository
 
-import (
-	"errors"
-)
+import "errors"
 
 type User struct {
 	ID   int    `json:"id"`
@@ -10,29 +8,31 @@ type User struct {
 	Age  int    `json:"age"`
 }
 
+type IUserRepository interface {
+	FindAll() ([]User, error)
+	FindByID(id int) (User, error)
+}
+
 // UserRepository é a estrutura para interagir com os dados dos usuários
 type UserRepository struct {
-	users []User
 }
 
 // NewUserRepository cria um novo repositório com alguns dados iniciais
-func NewUserRepository() *UserRepository {
-	return &UserRepository{
-		users: []User{
-			{ID: 1, Name: "Alice", Age: 30},
-			{ID: 2, Name: "Bob", Age: 25},
-		},
-	}
+func NewUserRepository() IUserRepository {
+	return &UserRepository{}
 }
 
-// FindAll retorna todos os usuários
-func (repo *UserRepository) FindAll() []User {
-	return repo.users
+var users = []User{
+	{ID: 1, Name: "Alice", Age: 30},
+	{ID: 2, Name: "Bob", Age: 25},
 }
 
-// FindByID procura um usuário pelo ID
-func (repo *UserRepository) FindByID(id int) (User, error) {
-	for _, user := range repo.users {
+func (u UserRepository) FindAll() ([]User, error) {
+	return users, nil
+}
+
+func (u UserRepository) FindByID(id int) (User, error) {
+	for _, user := range users {
 		if user.ID == id {
 			return user, nil
 		}
