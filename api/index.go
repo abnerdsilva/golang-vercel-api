@@ -2,31 +2,28 @@ package handler
 
 import (
 	"fmt"
-	"net/http"
-
+	//"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"golang-vercel-api/api/controller"
+	"golang-vercel-api/api/model/repository"
 )
-
-var (
-	app *gin.Engine
-)
-
-func myRoute(r *gin.RouterGroup) {
-	r.GET("/admin", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello World")
-	})
-}
-
-func init() {
-	app = gin.New()
-	r := app.Group("/api")
-	myRoute(r)
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-	app.ServeHTTP(w, r)
-}
 
 func main() {
-	fmt.Println("main")
+	dbFile := "../DB/processos.json"
+
+	processRepo := repository.NewProcessoRepository(dbFile)
+	processControll := controller.NewProcessoController(processRepo)
+
+	router := gin.Default()
+	//router.Use(static.Serve("/", static.LocalFile("../build", false)))
+
+	router.GET("/process", processControll.GetProcessos)
+	router.GET("/process/:id", processControll.GetProcesso)
+	router.POST("/process", processControll.CreateProcesso)
+
+	err := router.Run(":8787")
+	if err != nil {
+		fmt.Printf(err.Error())
+		return
+	}
 }
