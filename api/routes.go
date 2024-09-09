@@ -38,6 +38,13 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// NotFoundHandler trata requisições para rotas não mapeadas
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(map[string]string{"error": "Route not found"})
+}
+
 // Handler é a função principal que o Vercel chamará
 func Handler(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter().PathPrefix("/api").Subrouter().StrictSlash(true)
@@ -51,6 +58,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// Definindo as rotas
 	router.HandleFunc("/users", GetAllUsers).Methods("GET")
 	router.HandleFunc("/users/{id}", GetUserByID).Methods("GET")
+
+	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
 	// Usar o roteador para processar a solicitação
 	router.ServeHTTP(w, r)
