@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"golang-vercel-api/api/repository"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -37,14 +38,20 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-// Handler é a função principal que Vercel chama
+// Handler é a função principal que o Vercel chamará
 func Handler(w http.ResponseWriter, r *http.Request) {
-	router := mux.NewRouter()
+	router := mux.NewRouter().PathPrefix("/api").Subrouter().StrictSlash(true)
+	router.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+		_, err := io.WriteString(w, "OK")
+		if err != nil {
+			return
+		}
+	})
 
 	// Definindo as rotas
-	router.HandleFunc("/api/users", GetAllUsers).Methods("GET")
-	router.HandleFunc("/api/users/{id}", GetUserByID).Methods("GET")
+	router.HandleFunc("/users", GetAllUsers).Methods("GET")
+	router.HandleFunc("/users/{id}", GetUserByID).Methods("GET")
 
-	// Servindo as requisições
+	// Usar o roteador para processar a solicitação
 	router.ServeHTTP(w, r)
 }
